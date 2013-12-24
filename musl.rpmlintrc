@@ -1,0 +1,2 @@
+# libc.so
+addFilter("E: devel-file-in-non-devel-package")
