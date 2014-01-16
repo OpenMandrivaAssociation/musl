@@ -4,7 +4,7 @@
 %bcond_with system_libc
 
 Name: musl
-Version: 0.9.14
+Version: 0.9.15
 Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
