@@ -1,4 +1,2 @@
-removed_sources:
-  musl-0.9.14.tar.gz: 162b329bab1f1ec8d257cc401b6614aae23c902c
 sources:
-  musl-0.9.15.tar.gz: 8faf2c4eb04ea33b66dc76759bcd117ee362b947
+  musl-1.0.0.tar.gz: 02a9d67bd747d97e48e572c9757abb41492386cc
