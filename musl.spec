@@ -5,7 +5,7 @@
 
 Name: musl
 Version: 1.1.1
-Release: 1
+Release: 2
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
@@ -58,7 +58,7 @@ with static linking).
 export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-3`-"
 %endif
 
-export CFLAGS="-fuse-ld=bfd -fno-toplevel-reorder"
+export CFLAGS="-fuse-ld=bfd"
 
 %configure \
 %if ! %{with system_libc}
