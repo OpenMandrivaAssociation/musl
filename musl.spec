@@ -58,7 +58,7 @@ with static linking).
 export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-3`-"
 %endif
 
-export CFLAGS="-fuse-ld=bfd"
+export CFLAGS="-fuse-ld=bfd -fno-toplevel-reorder"
 
 %configure \
 %if ! %{with system_libc}
