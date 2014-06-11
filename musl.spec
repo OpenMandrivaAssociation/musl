@@ -4,8 +4,8 @@
 %bcond_with system_libc
 
 Name: musl
-Version: 1.1.1
-Release: 2
+Version: 1.1.2
+Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
@@ -56,9 +56,18 @@ with static linking).
 %setup -q
 %if %{?cross_compiling}
 export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-3`-"
+export CC=%{__cc}
+%else
+# Setting as a variable to make it easier to force gcc
+# for musl-gcc's sake
+export CC=%{__cc}
 %endif
 
-export CFLAGS="-fuse-ld=bfd -fno-toplevel-reorder"
+if echo $CC |grep -q gcc; then
+	export CFLAGS="-O2 -fuse-ld=bfd -fno-toplevel-reorder"
+else
+	export CFLAGS="-O2 -fuse-ld=bfd"
+fi
 
 %configure \
 %if ! %{with system_libc}
@@ -70,7 +79,8 @@ export CFLAGS="-fuse-ld=bfd -fno-toplevel-reorder"
 %endif
 	--syslibdir=/%{_lib} \
 	--enable-shared \
-	--enable-static
+	--enable-static \
+	--enable-gcc-wrapper
 
 %build
 %make
