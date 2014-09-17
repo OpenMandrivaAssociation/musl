@@ -4,14 +4,19 @@
 %bcond_with system_libc
 
 Name: musl
-Version: 1.1.2
-Release: 3
+Version: 1.1.4
+Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
 URL: http://www.musl-libc.org/
 License: MIT
 Group: System/Libraries
+%if "%_lib" == "lib64"
+Provides: libc.so()(64bit)
+%else
+Provides: libc.so
+%endif
 
 %track
 prog %{name} = {
