@@ -4,7 +4,7 @@
 %bcond_with system_libc
 
 Name: musl
-Version: 1.1.7
+Version: 1.1.8
 Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
@@ -59,9 +59,13 @@ with static linking).
 
 %prep
 %setup -q
-%if %{?cross_compiling}
-export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-3`-"
-export CC=%{__cc}
+%if %{cross_compiling}
+if [ "`basename %{__cc}`" = "clang" ]; then
+	export CROSS_COMPILE="%{_target_platform}-"
+	export CC="%{__cc} -target %{_target_platform}"
+else
+	export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-3`-"
+fi
 %else
 # Setting as a variable to make it easier to force gcc
 # for musl-gcc's sake
@@ -74,20 +78,34 @@ else
 	export CFLAGS="-O2 -fuse-ld=bfd"
 fi
 
-%configure \
+# Looks like autoconf, but isn't...
+./configure \
 %if ! %{with system_libc}
 	--prefix=%_libdir/musl \
 	--exec-prefix=%_libdir/musl \
 	--libdir=%_libdir/musl/lib \
 	--includedir=%_libdir/musl/include \
-	--bindir=%_bindir \
+%else
+	--prefix=%_prefix \
+	--exec-prefix=%_prefix \
+	--libdir=%_libdir \
+	--includedir=%_includedir \
 %endif
+	--bindir=%_bindir \
 	--syslibdir=/%{_lib} \
 	--enable-shared \
 	--enable-static \
 	--enable-gcc-wrapper
 
 %build
+%if %{cross_compiling}
+if [ "`basename %{__cc}`" = "clang" ]; then
+	export CROSS_COMPILE="%{_target_platform}-"
+	export CC="%{__cc} -target %{_target_platform}"
+else
+	export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-3`-"
+fi
+%endif
 %make
 
 %install
