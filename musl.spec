@@ -64,7 +64,8 @@ if [ "`basename %{__cc}`" = "clang" ]; then
 	export CROSS_COMPILE="%{_target_platform}-"
 	export CC="%{__cc} -target %{_target_platform}"
 else
-	export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-3`-"
+	export CROSS_COMPILE="`echo %{__cc} |cut -d- -f1-4`-"
+	export CC=%{__cc}
 fi
 %else
 # Setting as a variable to make it easier to force gcc
