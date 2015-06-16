@@ -4,7 +4,7 @@
 %bcond_with system_libc
 
 Name: musl
-Version: 1.1.9
+Version: 1.1.10
 Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
@@ -12,6 +12,7 @@ Summary: The musl C library
 URL: http://www.musl-libc.org/
 License: MIT
 Group: System/Libraries
+Patch0: http://git.musl-libc.org/cgit/musl/patch/?id=63f4b9f18f3674124d8bcb119739fec85e6da005
 %if "%_lib" == "lib64"
 Provides: libc.so()(64bit)
 %else
@@ -59,6 +60,7 @@ with static linking).
 
 %prep
 %setup -q
+%apply_patches
 %if %{cross_compiling}
 if [ "`basename %{__cc}`" = "clang" ]; then
 	export CROSS_COMPILE="%{_target_platform}-"
