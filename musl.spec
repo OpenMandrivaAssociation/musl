@@ -80,6 +80,10 @@ if echo $CC |grep -q gcc; then
 else
 	export CFLAGS="-O2 -fuse-ld=bfd"
 fi
+%ifarch %arm
+# fenv.s uses neon registers
+echo %{__cc} |grep -q clang && export CFLAGS="$CFLAGS -no-integrated-as"
+%endif
 
 # Looks like autoconf, but isn't...
 ./configure \
