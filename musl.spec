@@ -13,6 +13,8 @@ URL: http://www.musl-libc.org/
 License: MIT
 Group: System/Libraries
 Patch0: http://git.musl-libc.org/cgit/musl/patch/?id=63f4b9f18f3674124d8bcb119739fec85e6da005
+# Add crtbegin.o and crtend.o from ellcc
+Patch1: musl-1.1.10-crtstuff.patch
 %if "%_lib" == "lib64"
 Provides: libc.so()(64bit)
 %else
