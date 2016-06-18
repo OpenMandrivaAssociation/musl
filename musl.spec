@@ -5,7 +5,7 @@
 
 Name: musl
 Version: 1.1.14
-Release: 1
+Release: 2
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
@@ -13,7 +13,7 @@ URL: http://www.musl-libc.org/
 License: MIT
 Group: System/Libraries
 # Add crtbegin.o and crtend.o from ellcc
-Patch1: musl-1.1.10-crtstuff.patch
+#Patch1: musl-1.1.10-crtstuff.patch
 %if "%_lib" == "lib64"
 Provides: libc.so()(64bit)
 %else
@@ -103,7 +103,7 @@ echo %{__cc} |grep -q clang && export CFLAGS="$CFLAGS -no-integrated-as"
 	--syslibdir=/%{_lib} \
 	--enable-shared \
 	--enable-static \
-	--enable-gcc-wrapper
+	--enable-wrapper=all
 
 %build
 %if %{cross_compiling}
@@ -125,36 +125,20 @@ mkdir -p %{buildroot}/%{_lib}
 # so we have to move it to /%{_lib}/ld-musl-* and symlink
 # its regular name there, not vice versa (as musl's build
 # system does)
-case %{_target_cpu} in
-i?86|athlon|pentium?)
-	ARCH=i386
-	;;
-x86_64|amd64|intel64)
-	ARCH=x86_64
-	;;
-arm*|xscale)
-	ARCH=arm
-	;;
-powerpc*)
-	ARCH=powerpc
-	;;
-mips*)
-	ARCH=mips
-	;;
-microblaze*)
-	ARCH=microblaze
-	;;
-esac
-[ -z "$ARCH" ] && exit 1
+cat >>Makefile <<'EOF'
+ldsoname:
+	echo $(LDSO_PATHNAME)
+EOF
+ldsoname=$(make --quiet ldsoname)
+ARCH=$(echo $ldsoname |cut -d- -f3 |cut -d. -f1)
 
-rm -f %{buildroot}/%{_lib}/ld-musl-$ARCH.so.1
 %if %{with system_libc}
-mv %{buildroot}%{_libdir}/libc.so %{buildroot}/%{_lib}/ld-musl-$ARCH.so.1
-ln -s ld-musl-$ARCH.so.1 %{buildroot}/%{_lib}/libc.so
+mv %{buildroot}%{_libdir}/libc.so %{buildroot}$ldsoname
+ln -s $ldsoname %{buildroot}/%{_lib}/libc.so
 ln -s /%{_lib}/libc.so %{buildroot}%{_libdir}/libc.so
 %else
-mv %{buildroot}%{_libdir}/musl/lib/libc.so %{buildroot}/%{_lib}/ld-musl-$ARCH.so.1
-ln -s /%{_lib}/ld-musl-$ARCH.so.1 %{buildroot}%{_libdir}/musl/lib/libc.so
+mv %{buildroot}%{_libdir}/musl/lib/libc.so %{buildroot}$ldsoname
+ln -s $ldsoname %{buildroot}%{_libdir}/musl/lib/libc.so
 mkdir -p %{buildroot}%{_sysconfdir}
 echo %{_libdir}/musl/lib >%{buildroot}%{_sysconfdir}/ld-musl-$ARCH.path
 %endif
@@ -182,6 +166,8 @@ echo %{_libdir}/musl/lib >%{buildroot}%{_sysconfdir}/ld-musl-$ARCH.path
 %{_libdir}/musl/lib/musl-gcc.specs
 %endif
 %{_bindir}/musl-gcc
+%{_bindir}/musl-clang
+%{_bindir}/ld.musl-clang
 
 %files static-devel
 %if %{with system_libc}
