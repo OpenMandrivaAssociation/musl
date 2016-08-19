@@ -4,8 +4,8 @@
 %bcond_with system_libc
 
 Name: musl
-Version: 1.1.14
-Release: 2
+Version: 1.1.15
+Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
