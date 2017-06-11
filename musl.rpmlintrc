@@ -1,2 +1,4 @@
 # libc.so
 addFilter("E: devel-file-in-non-devel-package")
+# Empty headers in some cross environments... Need to make sure this is actually ok
+addFilter("E: zero-length")
