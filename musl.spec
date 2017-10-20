@@ -11,7 +11,7 @@
 )
 
 Name: musl
-Version: 1.1.16
+Version: 1.1.17
 Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
@@ -72,6 +72,8 @@ for i in %{long_targets}; do
 	cat <<EOF
 %%package -n cross-${i}-musl
 Summary: Musl libc for crosscompiling to ${i} targets
+BuildRequires: cross-${i}-gcc
+BuildRequires: cross-${i}-binutils
 Group: Development/Other
 EOF
 	main_libc=false
@@ -123,6 +125,7 @@ for i in %{long_targets}; do
 			export CROSS_COMPILE="${i}-"
 			export CC="${i}-gcc"
 		fi
+		export AS="${i}-as"
 		if echo $i |grep musl; then
 			# Main libc, cross
 			EXTRA_ARGS="--prefix=%{_prefix}/${i} --exec-prefix=%{_prefix}/${i} --libdir=%{_prefix}/${i}/lib --includedir=%{_prefix}/${i}/include"
