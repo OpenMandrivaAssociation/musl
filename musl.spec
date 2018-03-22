@@ -145,7 +145,7 @@ for i in %{long_targets}; do
 		export CC="${i}-gcc"
 	fi
 
-	mkdir build-${i}
+	mkdir -p build-${i}
 	cd build-${i}
 	# Looks like autoconf, but isn't...
 	../configure \
