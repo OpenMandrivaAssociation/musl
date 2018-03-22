@@ -27,13 +27,6 @@ Provides: libc.so()(64bit)
 Provides: libc.so
 %endif
 
-%track
-prog %{name} = {
-	url = http://www.musl-libc.org/download.html
-	regex = "%{name}-(__VER__)\.tar\.gz"
-	version = %{version}
-}
-
 %description
 musl is a “libc”, an implementation of the standard library functionality
 described in the ISO C and POSIX standards, plus common extensions, intended
