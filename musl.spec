@@ -78,7 +78,7 @@ EOF
 	echo
 	cat <<EOF
 %%description -n cross-${i}-musl
-Musl libc for crosscompiling to ${i} targets
+Musl libc for crosscompiling to ${i} targets.
 EOF
 	echo
 #	echo "%%files -n cross-${i}-musl"
@@ -92,8 +92,7 @@ done
 )
 
 %prep
-%setup -q
-%apply_patches
+%autosetup -p1
 
 for i in %{long_targets}; do
 	if [ "$i" = "%{_target_platform}" ]; then
@@ -175,7 +174,7 @@ for i in %{long_targets}; do
 		export CC=%{__cc}
 	fi
 	cd build-${i}
-	%make
+	%make_build
 	cd ..
 done
 
@@ -184,7 +183,7 @@ mkdir -p %{buildroot}/%{_lib}
 
 for i in %{long_targets}; do
 	cd build-${i}
-	%makeinstall_std
+	%make_install
 
 	if [ "${i}" = "%{_target_platform}" ]; then
 		# The dynamic linker must be available at boot time...
