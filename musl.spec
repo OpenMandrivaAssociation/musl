@@ -11,7 +11,7 @@
 )
 
 Name: musl
-Version: 1.1.21
+Version: 1.1.22
 Release: 1
 Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
