@@ -1,12 +1,12 @@
 # Debug package generation isn't compatible with musl at the moment
 %define debug_package %{nil}
 
-%global targets aarch64-linux armv7hl-linux i586-linux i686-linux x86_64-linux x32-linux aarch64-linuxmusl armv7hl-linuxmusl i586-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl
+%global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl aarch64-android armv7l-android armv8l-android
 %global long_targets %(
         for i in %{targets}; do
                 CPU=$(echo $i |cut -d- -f1)
                 OS=$(echo $i |cut -d- -f2)
-                echo -n "$(rpm --macros %%{_usrlibrpm}/macros:%%{_usrlibrpm}/platform/${CPU}-${OS}/macros --target=${CPU} -E %%{_target_platform}) "
+                echo -n "$(rpm --target=${CPU}-${OS} -E %%{_target_platform}) "
         done
 )
 
@@ -65,7 +65,7 @@ for i in %{long_targets}; do
 	cat <<EOF
 %%package -n cross-${i}-musl
 Summary: Musl libc for crosscompiling to ${i} targets
-BuildRequires: cross-${i}-gcc
+BuildRequires: cross-${i}-gcc-bootstrap
 BuildRequires: cross-${i}-binutils
 Group: Development/Other
 EOF
@@ -81,13 +81,13 @@ EOF
 Musl libc for crosscompiling to ${i} targets.
 EOF
 	echo
-#	echo "%%files -n cross-${i}-musl"
-#	if $main_libc; then
-#		echo "%{_prefix}/${i}/lib/*"
-#		echo "%{_prefix}/${i}/include/*"
-#	else
-#		echo "%{_prefix}/${i}/musl"
-#	fi
+	echo "%%files -n cross-${i}-musl"
+	if $main_libc; then
+		echo "%{_prefix}/${i}/lib/*"
+		echo "%{_prefix}/${i}/include/*"
+	else
+		echo "%{_prefix}/${i}/musl"
+	fi
 done
 )
 
@@ -111,8 +111,14 @@ for i in %{long_targets}; do
 	else
 		# Set up for crosscompiling...
 		if [ "`basename %{__cc}`" = "clang" ]; then
-			export CROSS_COMPILE="${i}-"
-			export CC="%{__cc} -target ${i}"
+			# FIXME remove once Clang supports RISC-V properly
+			if echo $i |grep -q riscv; then
+				export CROSS_COMPILE="${i}-"
+				export CC="${i}-gcc"
+			else
+				export CROSS_COMPILE="${i}-"
+				export CC="%{__cc} -target ${i}"
+			fi
 		else
 			export CROSS_COMPILE="${i}-"
 			export CC="${i}-gcc"
