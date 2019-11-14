@@ -1,5 +1,7 @@
 # Debug package generation isn't compatible with musl at the moment
 %define debug_package %{nil}
+# Doesn't work because of mixed clang/gcc use
+%global _disable_lto 1
 
 %global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl aarch64-android armv7l-android armv8l-android
 %global long_targets %(
@@ -98,6 +100,7 @@ for i in %{long_targets}; do
 	if [ "$i" = "%{_target_platform}" ]; then
 		# Native build...
 		unset CROSS_COMPILE || :
+		export CFLAGS="%{optflags}"
 		# Set CC a variable to make it easier to force gcc
 		# for musl-gcc's sake
 		export CC=%{__cc}
@@ -110,21 +113,24 @@ for i in %{long_targets}; do
 		fi
 	else
 		# Set up for crosscompiling...
+		export CFLAGS="-O2"
 		if [ "`basename %{__cc}`" = "clang" ]; then
-%ifarch %{ix86} %{x86_64}
 			# FIXME remove once Clang supports RISC-V properly
 			if echo $i |grep -q 'riscv'; then
-%else
-			# FIXME remove riscv once Clang supports RISC-V properly
-			# FIXME remove i.86 once ARM->i686 crosscompilers know
-			# about __muldi3 and friends
-			if echo $i |grep -qE '(riscv|i.86)'; then
-%endif
 				export CROSS_COMPILE="${i}-"
 				export CC="${i}-gcc"
 			else
 				export CROSS_COMPILE="${i}-"
 				export CC="%{__cc} -target ${i}"
+			fi
+			if echo $i |grep -q x32; then
+				export CC="$CC -mx32 -Wa,--x32"
+			elif echo $i |grep -q x86_64; then
+				export CC="$CC -m64"
+			elif echo $i |grep -q aarch64; then
+				export CC="$CC -m64"
+			elif echo $i |grep -qE 'i.86'; then
+				export CFLAGS="$CFLAGS -march=i686 -m32 -mmmx -msse -mfpmath=sse -fasynchronous-unwind-tables -mstackrealign"
 			fi
 		else
 			export CROSS_COMPILE="${i}-"
@@ -141,9 +147,9 @@ for i in %{long_targets}; do
 	fi
 
 	if echo $CC |grep -q gcc; then
-		export CFLAGS="-O2 -fuse-ld=bfd -fno-toplevel-reorder"
+		export CFLAGS="$CFLAGS -fuse-ld=bfd -fno-toplevel-reorder"
 	else
-		export CFLAGS="-O2 -fuse-ld=bfd"
+		export CFLAGS="$CFLAGS -fuse-ld=bfd"
 	fi
 
 	if echo ${i} |grep -q arm; then
