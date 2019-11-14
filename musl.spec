@@ -111,8 +111,15 @@ for i in %{long_targets}; do
 	else
 		# Set up for crosscompiling...
 		if [ "`basename %{__cc}`" = "clang" ]; then
+%ifarch %{ix86} %{x86_64}
 			# FIXME remove once Clang supports RISC-V properly
-			if echo $i |grep -q riscv; then
+			if echo $i |grep -q 'riscv'; then
+%else
+			# FIXME remove riscv once Clang supports RISC-V properly
+			# FIXME remove i.86 once ARM->i686 crosscompilers know
+			# about __muldi3 and friends
+			if echo $i |grep -qE '(riscv|i.86)'; then
+%endif
 				export CROSS_COMPILE="${i}-"
 				export CC="${i}-gcc"
 			else
@@ -166,19 +173,6 @@ done
 
 %build
 for i in %{long_targets}; do
-	if [ "$i" != "%{_target_platform}" ]; then
-		# Set up for crosscompiling...
-		if [ "`basename %{__cc}`" = "clang" ]; then
-			export CROSS_COMPILE="${i}-"
-			export CC="%{__cc} -target ${i}"
-		else
-			export CROSS_COMPILE="${i}-"
-			export CC="${i}-gcc"
-		fi
-	else
-		unset CROSS_COMPILE || :
-		export CC=%{__cc}
-	fi
 	cd build-${i}
 	%make_build
 	cd ..
