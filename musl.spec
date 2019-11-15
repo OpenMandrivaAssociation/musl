@@ -116,7 +116,7 @@ for i in %{long_targets}; do
 		export CFLAGS="-O2"
 		if [ "`basename %{__cc}`" = "clang" ]; then
 			# FIXME remove once Clang supports RISC-V properly
-			if echo $i |grep -q 'riscv'; then
+			if echo $i |grep -qE '(riscv|x86_64)'; then
 				export CROSS_COMPILE="${i}-"
 				export CC="${i}-gcc"
 			else
