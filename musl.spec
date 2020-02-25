@@ -4,9 +4,9 @@
 %global _disable_lto 1
 
 %ifarch armv7hnl
-%global targets aarch64-linux armv7hnl-linux i686-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x32-linuxmusl riscv64-linuxmusl aarch64-android armv7l-android armv8l-android
+%global targets aarch64-linux armv7hnl-linux i686-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x32-linuxmusl riscv64-linuxmusl
 %else
-%global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl aarch64-android armv7l-android armv8l-android
+%global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl
 %endif
 %global long_targets %(
         for i in %{targets}; do
@@ -17,12 +17,12 @@
 )
 
 Name: musl
-Version:	1.1.24
+Version:	1.2.0
 Release:	1
-Source0: http://www.musl-libc.org/releases/%{name}-%{version}.tar.gz
+Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
-URL: http://www.musl-libc.org/
+URL: http://musl.libc.org/
 License: MIT
 Group: System/Libraries
 # Add crtbegin.o and crtend.o from ellcc
