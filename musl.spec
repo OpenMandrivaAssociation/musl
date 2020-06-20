@@ -18,7 +18,7 @@
 
 Name: musl
 Version:	1.2.0
-Release:	1
+Release:	2
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
@@ -32,6 +32,8 @@ Provides: libc.so()(64bit)
 %else
 Provides: libc.so
 %endif
+# for hardlink
+BuildRequires:	util-linux
 
 %description
 musl is a “libc”, an implementation of the standard library functionality
@@ -62,37 +64,80 @@ Requires: %{name}-devel = %{EVRD}
 Static libraries for linking to %{name}.
 
 Install this package if you wish to develop or compile applications using
-%{name} statically (users of the resulting binary won't need %{name} installed
-with static linking).
+%{name} statically (users of the resulting binary will not need %{name}
+installed with static linking).
 
 %(
 for i in %{long_targets}; do
-	[ "$i" = "%{_target_platform}" ] && continue
-	cat <<EOF
+	ARCH="$(echo $i |cut -d- -f1)"
+	echo $ARCH |grep -q 'i.86' && ARCH=i386
+	echo $ARCH |grep -q arm && ARCH=armhf
+	echo $i |grep -q x32 && ARCH=x32
+	if [ "$i" = "%{_target_platform}" ]; then
+		echo "%%files"
+		echo "/lib/ld-musl-$ARCH.so*"
+		if echo ${i} |grep -q musl; then
+			# System libc...
+			echo "%{_libdir}/libc.so"
+			echo "/%{_lib}/libc.so"
+		else
+			echo "%%dir %{_libdir}/musl"
+			echo "%%dir %{_libdir}/musl/lib"
+			echo "%{_libdir}/musl/lib/libc.so"
+			echo "%{_sysconfdir}/ld-musl-*.path"
+		fi
+		echo "/%{_lib}/ld-musl-*.so.1"
+		echo
+		echo "%%files devel"
+		if echo ${i} |grep -q musl; then
+			# System libc...
+			echo "%{_includedir}/*"
+			echo "%{_libdir}/*.o"
+			echo "%{_libdir}/musl-gcc.specs"
+		else
+			echo "%{_libdir}/musl/include"
+			echo "%{_libdir}/musl/lib/*.o"
+			echo "%{_libdir}/musl/lib/musl-gcc.specs"
+		fi
+		echo "%{_bindir}/musl-gcc"
+		echo "%{_bindir}/musl-clang"
+		echo "%{_bindir}/ld.musl-clang"
+		echo
+		echo "%%files static-devel"
+		if echo ${i} |grep -q musl; then
+			# System libc...
+			echo "%{_libdir}/*.a"
+		else
+			echo "%{_libdir}/musl/lib/*.a"
+		fi
+	else
+		cat <<EOF
 %%package -n cross-${i}-musl
 Summary: Musl libc for crosscompiling to ${i} targets
 BuildRequires: cross-${i}-gcc-bootstrap
 BuildRequires: cross-${i}-binutils
 Group: Development/Other
 EOF
-	main_libc=false
-	if echo $i |grep -q musl; then
-		# musl is the main libc for this platform...
-		main_libc=true
-		echo "Provides: cross-${i}-libc"
-	fi
-	echo
-	cat <<EOF
+		main_libc=false
+		if echo $i |grep -q musl; then
+			# musl is the main libc for this platform...
+			main_libc=true
+			echo "Provides: cross-${i}-libc"
+		fi
+		echo
+		cat <<EOF
 %%description -n cross-${i}-musl
 Musl libc for crosscompiling to ${i} targets.
 EOF
-	echo
-	echo "%%files -n cross-${i}-musl"
-	if $main_libc; then
-		echo "%{_prefix}/${i}/lib/*"
-		echo "%{_prefix}/${i}/include/*"
-	else
-		echo "%{_prefix}/${i}/musl"
+		echo
+		echo "%%files -n cross-${i}-musl"
+		echo "/lib/ld-musl-$ARCH.so*"
+		if $main_libc; then
+			echo "%{_prefix}/${i}/lib/*"
+			echo "%{_prefix}/${i}/include/*"
+		else
+			echo "%{_prefix}/${i}/musl"
+		fi
 	fi
 done
 )
@@ -189,11 +234,18 @@ for i in %{long_targets}; do
 done
 
 %install
-mkdir -p %{buildroot}/%{_lib}
+mkdir -p %{buildroot}/%{_lib} %{buildroot}/lib
+cat >>Makefile <<'EOF'
+
+ldsoname:
+	echo $(LDSO_PATHNAME)
+EOF
 
 for i in %{long_targets}; do
 	cd build-${i}
 	%make_install
+
+	ldsoname=$(make --quiet ldsoname)
 
 	if [ "${i}" = "%{_target_platform}" ]; then
 		# The dynamic linker must be available at boot time...
@@ -201,12 +253,6 @@ for i in %{long_targets}; do
 		# so we have to move it to /%{_lib}/ld-musl-* and symlink
 		# its regular name there, not vice versa (as musl's build
 		# system does)
-		cat >>Makefile <<'EOF'
-
-ldsoname:
-	echo $(LDSO_PATHNAME)
-EOF
-		ldsoname=$(make --quiet ldsoname)
 		ARCH=$(echo $ldsoname |cut -d- -f3 |cut -d. -f1)
 
 		if echo ${i} |grep -q musl; then
@@ -220,52 +266,20 @@ EOF
 			mkdir -p %{buildroot}%{_sysconfdir}
 			echo %{_libdir}/musl/lib >%{buildroot}%{_sysconfdir}/ld-musl-$ARCH.path
 		fi
+
+		# Musl always expects its dynamic loader in /lib -- since, unlike
+		# glibc, the arch name is part of the file name, this doesn't
+		# cause conflicts.
+		[ -e %{buildroot}/lib/$(basename $ldsoname) ] || ln %{buildroot}$ldsoname %{buildroot}/lib
+
+	else
+		[ -e %{buildroot}/lib/$(basename $ldsoname) ] || ln %{buildroot}%{_prefix}/$i/lib/libc.so %{buildroot}/lib/$(basename $ldsoname) || ln %{buildroot}%{_prefix}/$i/musl/lib/libc.so %{buildroot}/lib/$(basename $ldsoname)
 	fi
 
 	cd ..
 done
 
-%(
-for i in %{long_targets}; do
-	if [ "${i}" = "%{_target_platform}" ]; then
-		echo "%%files"
-		if echo ${i} |grep -q musl; then
-			# System libc...
-			echo "%{_libdir}/libc.so"
-			echo "/%{_lib}/libc.so"
-		else
-			echo "%%dir %{_libdir}/musl"
-			echo "%%dir %{_libdir}/musl/lib"
-			echo "%{_libdir}/musl/lib/libc.so"
-			echo "%{_sysconfdir}/ld-musl-*.path"
-		fi
-		echo "/%{_lib}/ld-musl-*.so.1"
-		echo
-		echo "%%files devel"
-		if echo ${i} |grep -q musl; then
-			# System libc...
-			echo "%{_includedir}/*"
-			echo "%{_libdir}/*.o"
-			echo "%{_libdir}/musl-gcc.specs"
-		else
-			echo "%{_libdir}/musl/include"
-			echo "%{_libdir}/musl/lib/*.o"
-			echo "%{_libdir}/musl/lib/musl-gcc.specs"
-		fi
-		echo "%{_bindir}/musl-gcc"
-		echo "%{_bindir}/musl-clang"
-		echo "%{_bindir}/ld.musl-clang"
-		echo
-		echo "%%files static-devel"
-		if echo ${i} |grep -q musl; then
-			# System libc...
-			echo "%{_libdir}/*.a"
-		else
-			echo "%{_libdir}/musl/lib/*.a"
-		fi
-	else
-		echo "%%files -n cross-${i}-musl"
-		echo "%{_prefix}/${i}/*"
-	fi
-done
-)
+# Hardlink identical files together -- no need to waste separate space
+# on e.g. x86_64-openmandriva-linux-gnu/musl/lib/libc.so and
+# x86_64-openmandriva-linux-musl/lib/libc.so
+hardlink %{buildroot}
