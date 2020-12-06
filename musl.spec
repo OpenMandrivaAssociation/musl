@@ -6,7 +6,7 @@
 %ifarch armv7hnl
 %global targets aarch64-linux armv7hnl-linux i686-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x32-linuxmusl riscv64-linuxmusl
 %else
-%global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl
+%global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl
 %endif
 %global long_targets %(
         for i in %{targets}; do
@@ -17,8 +17,8 @@
 )
 
 Name: musl
-Version:	1.2.0
-Release:	2
+Version:	1.2.1
+Release:	1
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
@@ -73,6 +73,7 @@ for i in %{long_targets}; do
 	echo $ARCH |grep -q 'i.86' && ARCH=i386
 	echo $ARCH |grep -q arm && ARCH=armhf
 	echo $i |grep -q x32 && ARCH=x32
+	echo $ARCH |grep -q ppc && ARCH="$(echo ${ARCH} |sed -e 's,ppc,powerpc,')"
 	if [ "$i" = "%{_target_platform}" ]; then
 		echo "%%files"
 		echo "/lib/ld-musl-$ARCH.so*"
@@ -195,12 +196,6 @@ for i in %{long_targets}; do
 		fi
 	fi
 
-	if echo $CC |grep -q gcc; then
-		export CFLAGS="$CFLAGS -fuse-ld=bfd -fno-toplevel-reorder"
-	else
-		export CFLAGS="$CFLAGS -fuse-ld=bfd"
-	fi
-
 	if echo ${i} |grep -q arm; then
 		# FIXME currently forcing gcc to work around
 		# confusion over hard-float vs. soft-float
@@ -210,6 +205,15 @@ for i in %{long_targets}; do
 		# clang -target x86_64-linux-gnux32 thinks
 		# x86_64-linux-gnu-ld is the best fitting linker
 		export CC="${i}-gcc"
+	fi
+
+	if echo $CC |grep -q gcc; then
+		export CFLAGS="$CFLAGS -fno-toplevel-reorder"
+		if echo $CC |grep -q ppc; then
+			export CFLAGS="$CFLAGS -fuse-ld=lld"
+		fi
+	else
+		export CFLAGS="$CFLAGS -fuse-ld=lld"
 	fi
 
 	mkdir -p build-${i}
