@@ -205,6 +205,12 @@ for i in %{long_targets}; do
 		# clang -target x86_64-linux-gnux32 thinks
 		# x86_64-linux-gnu-ld is the best fitting linker
 		export CC="${i}-gcc"
+%ifarch %{aarch64}
+	elif echo ${i} |grep -qE 'i.86-'; then
+		# Workaround for the aarch64->i686 clang crosscompiler
+		# generating calls to __muldc3 and friends
+		export CC="${i}-gcc"
+%endif
 	fi
 
 	if echo $CC |grep -q gcc; then
