@@ -5,6 +5,8 @@
 
 %ifarch armv7hnl
 %global targets aarch64-linux armv7hnl-linux i686-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x32-linuxmusl riscv64-linuxmusl
+%elifarch aarch64
+%global targets aarch64-linux armv7hnl-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl
 %else
 %global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl
 %endif
@@ -17,8 +19,8 @@
 )
 
 Name: musl
-Version:	1.2.2
-Release:	1
+Version: 1.2.2
+Release: 2
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
@@ -33,7 +35,7 @@ Provides: libc.so()(64bit)
 Provides: libc.so
 %endif
 # for hardlink
-BuildRequires:	util-linux
+BuildRequires: util-linux
 
 %description
 musl is a “libc”, an implementation of the standard library functionality
