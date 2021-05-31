@@ -1,5 +1,3 @@
-# Debug package generation isn't compatible with musl at the moment
-%define debug_package %{nil}
 # Doesn't work because of mixed clang/gcc use
 %global _disable_lto 1
 
@@ -20,7 +18,7 @@
 
 Name: musl
 Version: 1.2.2
-Release: 2
+Release: 3
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
