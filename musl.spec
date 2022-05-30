@@ -17,8 +17,8 @@
 )
 
 Name: musl
-Version: 1.2.2
-Release: 3
+Version: 1.2.3
+Release: 1
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
