@@ -1,0 +1,51 @@
+diff -up musl-1.2.3/configure.omv~ musl-1.2.3/configure
+--- musl-1.2.3/configure.omv~	2022-06-08 15:25:18.416861495 +0200
++++ musl-1.2.3/configure	2022-06-08 15:32:04.101053211 +0200
+@@ -353,6 +353,28 @@ tryflag CFLAGS_C99FSE -fexcess-precision
+ || { test "$ARCH" = i386 && tryflag CFLAGS_C99FSE -ffloat-store ; }
+ tryflag CFLAGS_C99FSE -frounding-math
+ 
++if [ "$malloc_dir" = "mimalloc" ]; then
++	# mimalloc needs access to headers that are skipped by
++	# -nostdinc. We still don't want to see system libc headers,
++	# but we want to see compiler headers such as stdatomic.h
++	# and emmintrin.h
++	#
++	# Unfortunately there is no standard way to get the compiler
++	# header search path, but this works for (at least) clang
++	# and gcc:
++	printf "checking for compiler intrinsic headers path... "
++	INCPATH="$($CC -print-search-dirs |grep ^libraries: |cut -d= -f2 |cut -d: -f1)/include"
++	if ! [ -e "$INCPATH/stdatomic.h" ]; then
++		printf "not found\n"
++		printf "Couldn't detect stdatomic.h for your compiler. Either add\n"
++		printf "a detection method or use a malloc implementation other than\n"
++		printf "mimalloc.\n"
++		exit 1
++	fi
++	printf "$INCPATH\n"
++	tryflag CFLAGS_C99FSE "-isystem $INCPATH"
++fi
++
+ #
+ # We may use the may_alias attribute if __GNUC__ is defined, so
+ # if the compiler defines __GNUC__ but does not provide it,
+diff -up musl-1.2.3/src/malloc/mimalloc/glue.h.omv~ musl-1.2.3/src/malloc/mimalloc/glue.h
+--- musl-1.2.3/src/malloc/mimalloc/glue.h.omv~	2022-06-08 15:34:14.449438578 +0200
++++ musl-1.2.3/src/malloc/mimalloc/glue.h	2022-06-08 14:58:13.711270230 +0200
+@@ -0,0 +1,15 @@
++#ifndef MALLOC_GLUE_H
++#define MALLOC_GLUE_H
++
++#define mi_malloc __libc_malloc_impl
++#define mi_realloc __libc_realloc
++#define mi_free __libc_free
++
++//#define malloc __libc_malloc_impl
++//#define realloc __libc_realloc
++//#define free __libc_free
++
++#define mmap __mmap
++#define madvise __madvise
++#define mremap __mremap
++#endif
