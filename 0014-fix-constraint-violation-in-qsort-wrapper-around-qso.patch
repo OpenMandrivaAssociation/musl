@@ -1,0 +1,26 @@
+From dcb31f6b450fdeed4dc364e15cd190e8562ea227 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Fri, 6 May 2022 19:34:48 -0400
+Subject: [PATCH 14/29] fix constraint violation in qsort wrapper around
+ qsort_r
+
+function pointer types do not implicitly convert to void *. a cast is
+required here.
+---
+ src/stdlib/qsort_nr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/stdlib/qsort_nr.c b/src/stdlib/qsort_nr.c
+index efe7ccec..8ffe71d0 100644
+--- a/src/stdlib/qsort_nr.c
++++ b/src/stdlib/qsort_nr.c
+@@ -10,5 +10,5 @@ static int wrapper_cmp(const void *v1, const void *v2, void *cmp)
+ 
+ void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
+ {
+-	__qsort_r(base, nel, width, wrapper_cmp, cmp);
++	__qsort_r(base, nel, width, wrapper_cmp, (void *)cmp);
+ }
+-- 
+2.37.2
+

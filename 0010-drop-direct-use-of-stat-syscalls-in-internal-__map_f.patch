@@ -1,0 +1,39 @@
+From 2b754a542492f5878608a1130e00021ae02a0e34 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Thu, 28 Apr 2022 02:18:42 -0400
+Subject: [PATCH 10/29] drop direct use of stat syscalls in internal __map_file
+
+this function is used to implement some baseline ISO C interfaces, so
+it cannot call any of the stat functions by their public names. use
+the namespace-safe __fstatat instead.
+---
+ src/time/__map_file.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/time/__map_file.c b/src/time/__map_file.c
+index d3cefa82..8ef36138 100644
+--- a/src/time/__map_file.c
++++ b/src/time/__map_file.c
+@@ -1,16 +1,16 @@
++#define _BSD_SOURCE
+ #include <sys/mman.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+ #include "syscall.h"
+-#include "kstat.h"
+ 
+ const char unsigned *__map_file(const char *pathname, size_t *size)
+ {
+-	struct kstat st;
++	struct stat st;
+ 	const unsigned char *map = MAP_FAILED;
+ 	int fd = sys_open(pathname, O_RDONLY|O_CLOEXEC|O_NONBLOCK);
+ 	if (fd < 0) return 0;
+-	if (!syscall(SYS_fstat, fd, &st)) {
++	if (!__fstatat(fd, "", &st, AT_EMPTY_PATH)) {
+ 		map = __mmap(0, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+ 		*size = st.st_size;
+ 	}
+-- 
+2.37.2
+

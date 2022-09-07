@@ -1,0 +1,58 @@
+From fb10dc288d74442ea85c26b0ac3810f05377cba9 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Thu, 28 Apr 2022 02:24:44 -0400
+Subject: [PATCH 11/29] only use fstatat and others legacy stat syscalls if
+ they exist
+
+riscv32 and future architectures only provide statx.
+---
+ src/stat/fstatat.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/stat/fstatat.c b/src/stat/fstatat.c
+index cf11a294..74c51cf5 100644
+--- a/src/stat/fstatat.c
++++ b/src/stat/fstatat.c
+@@ -6,7 +6,6 @@
+ #include <stdint.h>
+ #include <sys/sysmacros.h>
+ #include "syscall.h"
+-#include "kstat.h"
+ 
+ struct statx {
+ 	uint32_t stx_mask;
+@@ -69,6 +68,10 @@ static int fstatat_statx(int fd, const char *restrict path, struct stat *restric
+ 	return 0;
+ }
+ 
++#ifdef SYS_fstatat
++
++#include "kstat.h"
++
+ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restrict st, int flag)
+ {
+ 	int ret;
+@@ -130,15 +133,20 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
+ 
+ 	return 0;
+ }
++#endif
+ 
+ int __fstatat(int fd, const char *restrict path, struct stat *restrict st, int flag)
+ {
+ 	int ret;
++#ifdef SYS_fstatat
+ 	if (sizeof((struct kstat){0}.st_atime_sec) < sizeof(time_t)) {
+ 		ret = fstatat_statx(fd, path, st, flag);
+ 		if (ret!=-ENOSYS) return __syscall_ret(ret);
+ 	}
+ 	ret = fstatat_kstat(fd, path, st, flag);
++#else
++	ret = fstatat_statx(fd, path, st, flag);
++#endif
+ 	return __syscall_ret(ret);
+ }
+ 
+-- 
+2.37.2
+

@@ -1,0 +1,52 @@
+From c9ba0769a749e4e08fd8a8815b8ced96fba4927b Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Thu, 28 Apr 2022 02:14:34 -0400
+Subject: [PATCH 09/29] provide an internal namespace-safe __fstatat
+
+this makes it so we can drop direct stat syscall use in interfaces
+that can't use the POSIX namespace.
+---
+ src/include/sys/stat.h | 8 ++++++++
+ src/stat/fstatat.c     | 4 +++-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+ create mode 100644 src/include/sys/stat.h
+
+diff --git a/src/include/sys/stat.h b/src/include/sys/stat.h
+new file mode 100644
+index 00000000..822888b2
+--- /dev/null
++++ b/src/include/sys/stat.h
+@@ -0,0 +1,8 @@
++#ifndef SYS_STAT_H
++#define SYS_STAT_H
++
++#include "../../../include/sys/stat.h"
++
++hidden int __fstatat(int, const char *restrict, struct stat *restrict, int);
++
++#endif
+diff --git a/src/stat/fstatat.c b/src/stat/fstatat.c
+index de165b5c..cf11a294 100644
+--- a/src/stat/fstatat.c
++++ b/src/stat/fstatat.c
+@@ -131,7 +131,7 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
+ 	return 0;
+ }
+ 
+-int fstatat(int fd, const char *restrict path, struct stat *restrict st, int flag)
++int __fstatat(int fd, const char *restrict path, struct stat *restrict st, int flag)
+ {
+ 	int ret;
+ 	if (sizeof((struct kstat){0}.st_atime_sec) < sizeof(time_t)) {
+@@ -142,6 +142,8 @@ int fstatat(int fd, const char *restrict path, struct stat *restrict st, int fla
+ 	return __syscall_ret(ret);
+ }
+ 
++weak_alias(__fstatat, fstatat);
++
+ #if !_REDIR_TIME64
+ weak_alias(fstatat, fstatat64);
+ #endif
+-- 
+2.37.2
+

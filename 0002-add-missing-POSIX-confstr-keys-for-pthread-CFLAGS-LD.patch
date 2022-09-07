@@ -1,0 +1,47 @@
+From 55b727d7ad6c3c8ac147622c441e2995e553e91d Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Wed, 20 Apr 2022 09:06:54 -0400
+Subject: [PATCH 02/29] add missing POSIX confstr keys for pthread
+ CFLAGS/LDFLAGS
+
+_CS_POSIX_V7_THREADS_CFLAGS and _CS_POSIX_V7_THREADS_LDFLAGS have been
+missing for a long time, which is a conformance defect. we were
+waiting on glibc to add them or at least agree on the numeric values
+they will have so as to keep the numbering aligned. it looks like they
+will be added to glibc with these numbers, and in any case, this list
+does not have any significant churn that would result in the numbers
+getting taken.
+---
+ include/unistd.h   | 2 ++
+ src/conf/confstr.c | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/unistd.h b/include/unistd.h
+index 212263a7..80be3b26 100644
+--- a/include/unistd.h
++++ b/include/unistd.h
+@@ -467,6 +467,8 @@ pid_t gettid(void);
+ #define _CS_POSIX_V7_LPBIG_OFFBIG_LINTFLAGS	1147
+ #define _CS_V6_ENV	1148
+ #define _CS_V7_ENV	1149
++#define _CS_POSIX_V7_THREADS_CFLAGS	1150
++#define _CS_POSIX_V7_THREADS_LDFLAGS	1151
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/src/conf/confstr.c b/src/conf/confstr.c
+index 02cb1aa2..3d417284 100644
+--- a/src/conf/confstr.c
++++ b/src/conf/confstr.c
+@@ -7,7 +7,7 @@ size_t confstr(int name, char *buf, size_t len)
+ 	const char *s = "";
+ 	if (!name) {
+ 		s = "/bin:/usr/bin";
+-	} else if ((name&~4U)!=1 && name-_CS_POSIX_V6_ILP32_OFF32_CFLAGS>33U) {
++	} else if ((name&~4U)!=1 && name-_CS_POSIX_V6_ILP32_OFF32_CFLAGS>35U) {
+ 		errno = EINVAL;
+ 		return 0;
+ 	}
+-- 
+2.37.2
+

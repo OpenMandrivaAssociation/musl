@@ -1,0 +1,27 @@
+From baaf257f05b96816c24951e7b6721d72922949e5 Mon Sep 17 00:00:00 2001
+From: Eugene Yudin <e.yudin@ndmsystems.com>
+Date: Mon, 1 Aug 2022 13:53:22 -0400
+Subject: [PATCH 24/29] fix ESRCH error handling for clock_getcpuclockid
+
+the syscall used to probe availability of the clock fails with EINVAL
+when the requested pid does not exist, but clock_getcpuclockid is
+specified to use ESRCH for this purpose.
+---
+ src/time/clock_getcpuclockid.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/time/clock_getcpuclockid.c b/src/time/clock_getcpuclockid.c
+index 8a0e2d4c..bce1e8ab 100644
+--- a/src/time/clock_getcpuclockid.c
++++ b/src/time/clock_getcpuclockid.c
+@@ -8,6 +8,7 @@ int clock_getcpuclockid(pid_t pid, clockid_t *clk)
+ 	struct timespec ts;
+ 	clockid_t id = (-pid-1)*8U + 2;
+ 	int ret = __syscall(SYS_clock_getres, id, &ts);
++	if (ret == -EINVAL) ret = -ESRCH;
+ 	if (ret) return -ret;
+ 	*clk = id;
+ 	return 0;
+-- 
+2.37.2
+

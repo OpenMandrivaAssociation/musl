@@ -1,0 +1,33 @@
+From 37e18b7bf307fa4a8c745feebfcba54a0ba74f30 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Wed, 17 Aug 2022 18:34:07 -0400
+Subject: [PATCH 29/29] freopen: reset stream orientation (byte/wide) and
+ encoding rule
+
+this is a requirement of the C language (orientation) and POSIX
+(encoding rule) that was somehow overlooked.
+
+we rely on the fact that the buffer pointers have been reset by
+fflush, so that any future stdio operations on the stream will go
+through the same code paths they would on a newly-opened file without
+an orientation set, thereby setting the orientation as they should.
+---
+ src/stdio/freopen.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/stdio/freopen.c b/src/stdio/freopen.c
+index 615d4b47..96bfbb42 100644
+--- a/src/stdio/freopen.c
++++ b/src/stdio/freopen.c
+@@ -40,6 +40,8 @@ FILE *freopen(const char *restrict filename, const char *restrict mode, FILE *re
+ 		fclose(f2);
+ 	}
+ 
++	f->mode = 0;
++	f->locale = 0;
+ 	FUNLOCK(f);
+ 	return f;
+ 
+-- 
+2.37.2
+

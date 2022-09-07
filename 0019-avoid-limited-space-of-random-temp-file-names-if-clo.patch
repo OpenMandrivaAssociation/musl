@@ -1,0 +1,30 @@
+From a23a3da29bcca8d179d1e4de7d059639716a5c1e Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Thu, 23 Jun 2022 11:53:28 -0400
+Subject: [PATCH 19/29] avoid limited space of random temp file names if clock
+ resolution is low
+
+this is not an issue that was actually hit, but I noticed it during
+previous changes to __randname: if the resolution of tv_nsec is too
+low, the space of temp file names obtainable by a thread could
+plausibly be exhausted. mixing in tv_sec avoids this.
+---
+ src/temp/__randname.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/temp/__randname.c b/src/temp/__randname.c
+index 1425badc..e9b970f1 100644
+--- a/src/temp/__randname.c
++++ b/src/temp/__randname.c
+@@ -11,7 +11,7 @@ char *__randname(char *template)
+ 	unsigned long r;
+ 
+ 	__clock_gettime(CLOCK_REALTIME, &ts);
+-	r = ts.tv_nsec + __pthread_self()->tid * 65537UL;
++	r = ts.tv_sec + ts.tv_nsec + __pthread_self()->tid * 65537UL;
+ 	for (i=0; i<6; i++, r>>=5)
+ 		template[i] = 'A'+(r&15)+(r&16)*2;
+ 
+-- 
+2.37.2
+

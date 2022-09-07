@@ -1,0 +1,49 @@
+From 05a55868ff0f42cfc8701c7977322aa4c8e1aca3 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Wed, 4 May 2022 10:51:00 -0400
+Subject: [PATCH 12/29] provide an internal namespace-safe __fstat
+
+this avoids the need for implementation-internal callers to depend on
+the nonstandard AT_EMPTY_PATH extension to use __fstatat and isolates
+knowledge of that extension to the implementation of __fstat.
+---
+ src/include/sys/stat.h | 1 +
+ src/stat/fstat.c       | 6 ++++--
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/include/sys/stat.h b/src/include/sys/stat.h
+index 822888b2..59339bee 100644
+--- a/src/include/sys/stat.h
++++ b/src/include/sys/stat.h
+@@ -3,6 +3,7 @@
+ 
+ #include "../../../include/sys/stat.h"
+ 
++hidden int __fstat(int, struct stat *);
+ hidden int __fstatat(int, const char *restrict, struct stat *restrict, int);
+ 
+ #endif
+diff --git a/src/stat/fstat.c b/src/stat/fstat.c
+index 9bbb46de..27db0ccb 100644
+--- a/src/stat/fstat.c
++++ b/src/stat/fstat.c
+@@ -4,12 +4,14 @@
+ #include <fcntl.h>
+ #include "syscall.h"
+ 
+-int fstat(int fd, struct stat *st)
++int __fstat(int fd, struct stat *st)
+ {
+ 	if (fd<0) return __syscall_ret(-EBADF);
+-	return fstatat(fd, "", st, AT_EMPTY_PATH);
++	return __fstatat(fd, "", st, AT_EMPTY_PATH);
+ }
+ 
++weak_alias(__fstat, fstat);
++
+ #if !_REDIR_TIME64
+ weak_alias(fstat, fstat64);
+ #endif
+-- 
+2.37.2
+

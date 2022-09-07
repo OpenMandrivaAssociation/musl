@@ -1,0 +1,25 @@
+From 46d1c7801bb509e1097e8fadbaf359367fa4ef0b Mon Sep 17 00:00:00 2001
+From: Michael Pratt <mcpratt@pm.me>
+Date: Wed, 18 May 2022 23:13:23 -0400
+Subject: [PATCH 25/29] fix strings.h feature test macro usage due to missing
+ features.h
+
+---
+ include/strings.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/strings.h b/include/strings.h
+index db0960b4..b7a5ea08 100644
+--- a/include/strings.h
++++ b/include/strings.h
+@@ -5,6 +5,7 @@
+ extern "C" {
+ #endif
+ 
++#include <features.h>
+ 
+ #define __NEED_size_t
+ #define __NEED_locale_t
+-- 
+2.37.2
+

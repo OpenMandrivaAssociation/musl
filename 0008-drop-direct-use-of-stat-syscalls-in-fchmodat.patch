@@ -1,0 +1,70 @@
+From 7edbcbeb76cb46381c34e2c0491dcc459cd5fa46 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Thu, 28 Apr 2022 02:02:38 -0400
+Subject: [PATCH 08/29] drop direct use of stat syscalls in fchmodat
+
+instead, use the fstatat/stat functions, so that the logic for which
+syscalls are present and usable is all in fstatat.
+
+this results in a slight increase in cost for old kernels on 32-bit
+archs: now statx will be attempted first rather than just using the
+legacy time32 syscalls, despite us not caring about timestamps.
+however, it's not even clear that the legacy syscalls *should* succeed
+if the timestamps are out of range; arguably they should fail with
+EOVERFLOW. as such, paying a small cost here on old kernels seems
+well-motivated.
+
+with this change, fchmodat itself is no longer blocking ports to new
+archs that lack the legacy syscalls.
+---
+ src/stat/fchmodat.c | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/src/stat/fchmodat.c b/src/stat/fchmodat.c
+index 4ee00b0a..bc581050 100644
+--- a/src/stat/fchmodat.c
++++ b/src/stat/fchmodat.c
+@@ -2,7 +2,6 @@
+ #include <fcntl.h>
+ #include <errno.h>
+ #include "syscall.h"
+-#include "kstat.h"
+ 
+ int fchmodat(int fd, const char *path, mode_t mode, int flag)
+ {
+@@ -11,12 +10,12 @@ int fchmodat(int fd, const char *path, mode_t mode, int flag)
+ 	if (flag != AT_SYMLINK_NOFOLLOW)
+ 		return __syscall_ret(-EINVAL);
+ 
+-	struct kstat st;
++	struct stat st;
+ 	int ret, fd2;
+ 	char proc[15+3*sizeof(int)];
+ 
+-	if ((ret = __syscall(SYS_fstatat, fd, path, &st, flag)))
+-		return __syscall_ret(ret);
++	if (fstatat(fd, path, &st, flag))
++		return -1;
+ 	if (S_ISLNK(st.st_mode))
+ 		return __syscall_ret(-EOPNOTSUPP);
+ 
+@@ -27,12 +26,12 @@ int fchmodat(int fd, const char *path, mode_t mode, int flag)
+ 	}
+ 
+ 	__procfdname(proc, fd2);
+-	ret = __syscall(SYS_fstatat, AT_FDCWD, proc, &st, 0);
++	ret = stat(proc, &st);
+ 	if (!ret) {
+-		if (S_ISLNK(st.st_mode)) ret = -EOPNOTSUPP;
+-		else ret = __syscall(SYS_fchmodat, AT_FDCWD, proc, mode);
++		if (S_ISLNK(st.st_mode)) ret = __syscall_ret(-EOPNOTSUPP);
++		else ret = syscall(SYS_fchmodat, AT_FDCWD, proc, mode);
+ 	}
+ 
+ 	__syscall(SYS_close, fd2);
+-	return __syscall_ret(ret);
++	return ret;
+ }
+-- 
+2.37.2
+
