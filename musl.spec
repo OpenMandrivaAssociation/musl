@@ -3,8 +3,6 @@
 
 %ifarch armv7hnl
 %global targets aarch64-linux armv7hnl-linux i686-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x32-linuxmusl riscv64-linuxmusl
-%elifarch aarch64
-%global targets aarch64-linux armv7hnl-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl
 %else
 %global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl
 %endif
@@ -205,12 +203,6 @@ for i in %{long_targets}; do
 		# clang -target x86_64-linux-gnux32 thinks
 		# x86_64-linux-gnu-ld is the best fitting linker
 		export CC="${i}-gcc"
-%ifarch %{aarch64}
-	elif echo ${i} |grep -qE 'i.86-'; then
-		# Workaround for the aarch64->i686 clang crosscompiler
-		# generating calls to __muldc3 and friends
-		export CC="${i}-gcc"
-%endif
 	fi
 
 	if echo $CC |grep -q gcc; then
