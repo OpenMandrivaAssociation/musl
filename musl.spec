@@ -12,7 +12,7 @@
 
 Name: musl
 Version: 1.2.3
-Release: 1
+Release: 2
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source1: import-mimalloc.sh
 Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v2.0.6.tar.gz
