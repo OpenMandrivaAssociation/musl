@@ -1,9 +1,9 @@
-diff -up musl-1.2.3/configure.omv~ musl-1.2.3/configure
---- musl-1.2.3/configure.omv~	2022-06-08 15:25:18.416861495 +0200
-+++ musl-1.2.3/configure	2022-06-08 15:32:04.101053211 +0200
-@@ -353,6 +353,28 @@ tryflag CFLAGS_C99FSE -fexcess-precision
- || { test "$ARCH" = i386 && tryflag CFLAGS_C99FSE -ffloat-store ; }
- tryflag CFLAGS_C99FSE -frounding-math
+diff -up musl-1.2.4/configure.1~ musl-1.2.4/configure
+--- musl-1.2.4/configure.1~	2023-05-02 16:37:02.162912602 +0200
++++ musl-1.2.4/configure	2023-05-02 16:37:59.011416485 +0200
+@@ -361,6 +361,28 @@ tryflag CFLAGS_C99FSE -frounding-math
+ #
+ tryflag CFLAGS_C99FSE -fno-strict-aliasing
  
 +if [ "$malloc_dir" = "mimalloc" ]; then
 +	# mimalloc needs access to headers that are skipped by
@@ -30,9 +30,9 @@ diff -up musl-1.2.3/configure.omv~ musl-1.2.3/configure
  #
  # We may use the may_alias attribute if __GNUC__ is defined, so
  # if the compiler defines __GNUC__ but does not provide it,
-diff -up musl-1.2.3/src/malloc/mimalloc/glue.h.omv~ musl-1.2.3/src/malloc/mimalloc/glue.h
---- musl-1.2.3/src/malloc/mimalloc/glue.h.omv~	2022-06-08 15:34:14.449438578 +0200
-+++ musl-1.2.3/src/malloc/mimalloc/glue.h	2022-06-08 14:58:13.711270230 +0200
+diff -up musl-1.2.4/src/malloc/mimalloc/glue.h.1~ musl-1.2.4/src/malloc/mimalloc/glue.h
+--- musl-1.2.4/src/malloc/mimalloc/glue.h.1~	2023-05-02 16:37:02.162912602 +0200
++++ musl-1.2.4/src/malloc/mimalloc/glue.h	2023-05-02 16:37:02.162912602 +0200
 @@ -0,0 +1,15 @@
 +#ifndef MALLOC_GLUE_H
 +#define MALLOC_GLUE_H

@@ -11,11 +11,11 @@
 )
 
 Name: musl
-Version: 1.2.3
-Release: 2
+Version: 1.2.4
+Release: 1
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source1: import-mimalloc.sh
-Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v2.0.6.tar.gz
+Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
 URL: http://musl.libc.org/
@@ -31,35 +31,7 @@ Provides: libc.so
 # for hardlink
 BuildRequires: util-linux
 # Patches from upstream git
-Patch0001: 0001-fix-incorrect-parameter-name-in-internal-netlink.h-R.patch
-Patch0002: 0002-add-missing-POSIX-confstr-keys-for-pthread-CFLAGS-LD.patch
-Patch0003: 0003-remove-ARMSUBARCH-relic-from-configure.patch
-Patch0004: 0004-don-t-remap-internal-use-syscall-macros-to-nonexiste.patch
-Patch0005: 0005-only-use-getrlimit-setrlimit-syscalls-if-they-exist.patch
-Patch0006: 0006-only-fallback-to-gettimeofday-settimeofday-syscalls-.patch
-Patch0007: 0007-drop-use-of-stat-operation-in-temporary-file-name-ge.patch
-Patch0008: 0008-drop-direct-use-of-stat-syscalls-in-fchmodat.patch
-Patch0009: 0009-provide-an-internal-namespace-safe-__fstatat.patch
-Patch0010: 0010-drop-direct-use-of-stat-syscalls-in-internal-__map_f.patch
-Patch0011: 0011-only-use-fstatat-and-others-legacy-stat-syscalls-if-.patch
-Patch0012: 0012-provide-an-internal-namespace-safe-__fstat.patch
-Patch0013: 0013-use-__fstat-instead-of-__fstatat-with-AT_EMPTY_PATH-.patch
-Patch0014: 0014-fix-constraint-violation-in-qsort-wrapper-around-qso.patch
-Patch0015: 0015-mntent-fix-parsing-lines-with-optional-fields.patch
-Patch0016: 0016-mntent-fix-potential-mishandling-of-extremely-long-l.patch
-Patch0017: 0017-ensure-distinct-query-id-for-parallel-A-and-AAAA-que.patch
-Patch0018: 0018-remove-random-filename-obfuscation-that-leaks-ASLR-i.patch
-Patch0019: 0019-avoid-limited-space-of-random-temp-file-names-if-clo.patch
-Patch0020: 0020-in-early-stage-ldso-before-__dls2b-call-mprotect-wit.patch
-Patch0021: 0021-early-stage-ldso-remove-symbolic-references-via-erro.patch
-Patch0022: 0022-fix-mishandling-of-errno-in-getaddrinfo-AI_ADDRCONFI.patch
-Patch0023: 0023-aarch64-add-vfork.patch
-Patch0024: 0024-fix-ESRCH-error-handling-for-clock_getcpuclockid.patch
-Patch0025: 0025-fix-strings.h-feature-test-macro-usage-due-to-missin.patch
-Patch0026: 0026-use-syscall_arg_t-and-__scc-macro-for-arguments-to-_.patch
-Patch0027: 0027-ldso-support-DT_RELR-relative-relocation-format.patch
-Patch0028: 0028-ldso-process-RELR-only-for-non-FDPIC-archs.patch
-Patch0029: 0029-freopen-reset-stream-orientation-byte-wide-and-encod.patch
+# [ currently none needed ]
 # OpenMandriva additions
 Patch1000: musl-1.2.3-mimalloc-glue.patch
 
@@ -177,7 +149,7 @@ cd ..
 tar xf %{S:2}
 cd -
 cp %{S:1} .
-sh import-mimalloc.sh ../mimalloc-2.0.6
+sh import-mimalloc.sh ../mimalloc-2.1.2
 
 for i in %{long_targets}; do
 	if [ "$i" = "%{_target_platform}" ]; then
