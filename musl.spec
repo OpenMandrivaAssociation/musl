@@ -1,4 +1,4 @@
-# Doesn't work because of mixed clang/gcc use
+# FIXME LTO currently results in undefined reference to __dls2 on x86_64
 %global _disable_lto 1
 
 %global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl
@@ -11,11 +11,11 @@
 )
 
 Name: musl
-Version: 1.2.4
+Version: 1.2.5
 Release: 1
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source1: import-mimalloc.sh
-Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz
+Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.4.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
 URL: http://musl.libc.org/
@@ -149,7 +149,7 @@ cd ..
 tar xf %{S:2}
 cd -
 cp %{S:1} .
-sh import-mimalloc.sh ../mimalloc-2.1.2
+sh import-mimalloc.sh ../mimalloc-2.1.4
 
 for i in %{long_targets}; do
 	if [ "$i" = "%{_target_platform}" ]; then
@@ -169,15 +169,9 @@ for i in %{long_targets}; do
 	else
 		# Set up for crosscompiling...
 		export CFLAGS="-O2"
-		if [ "`basename %{__cc}`" = "clang" ]; then
-			# FIXME remove once Clang supports RISC-V properly
-			if echo $i |grep -qE '(riscv|x86_64)'; then
-				export CROSS_COMPILE="${i}-"
-				export CC="${i}-gcc"
-			else
-				export CROSS_COMPILE="${i}-"
-				export CC="%{__cc} -target ${i}"
-			fi
+		export CROSS_COMPILE="${i}-"
+		if %{__cc} --version 2>&1 |grep -q clang; then
+			export CC="%{__cc} -target ${i}"
 			if echo $i |grep -q x32; then
 				export CC="$CC -mx32 -Wa,--x32"
 			elif echo $i |grep -q x86_64; then
@@ -188,7 +182,6 @@ for i in %{long_targets}; do
 				export CFLAGS="$CFLAGS -march=i686 -m32 -mmmx -msse -mfpmath=sse -fasynchronous-unwind-tables -mstackrealign"
 			fi
 		else
-			export CROSS_COMPILE="${i}-"
 			export CC="${i}-gcc"
 		fi
 		export AS="${i}-as"
