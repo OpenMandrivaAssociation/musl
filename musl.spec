@@ -18,7 +18,7 @@ Source1: import-mimalloc.sh
 Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.4.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
-URL: http://musl.libc.org/
+URL: https://musl.libc.org/
 License: MIT
 Group: System/Libraries
 # Add crtbegin.o and crtend.o from ellcc
