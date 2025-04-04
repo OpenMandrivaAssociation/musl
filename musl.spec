@@ -12,10 +12,11 @@
 
 Name: musl
 Version: 1.2.5
-Release: 1
+Release: 2
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source1: import-mimalloc.sh
-Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.4.tar.gz
+%define mimalloc_version 3.0.3
+Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v%{mimalloc_version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
 URL: https://musl.libc.org/
@@ -31,7 +32,8 @@ Provides: libc.so
 # for hardlink
 BuildRequires: util-linux
 # Patches from upstream git
-# [ currently none needed ]
+Patch0: https://www.openwall.com/lists/musl/2025/02/13/1/1#/CVE-2025-26519-1.patch
+Patch1: https://www.openwall.com/lists/musl/2025/02/13/1/2#/CVE-2025-26519-2.patch
 # OpenMandriva additions
 Patch1000: musl-1.2.3-mimalloc-glue.patch
 
@@ -149,7 +151,7 @@ cd ..
 tar xf %{S:2}
 cd -
 cp %{S:1} .
-sh import-mimalloc.sh ../mimalloc-2.1.4
+sh import-mimalloc.sh ../mimalloc-%{mimalloc_version}
 
 for i in %{long_targets}; do
 	if [ "$i" = "%{_target_platform}" ]; then
@@ -244,42 +246,47 @@ ldsoname:
 EOF
 
 for i in %{long_targets}; do
+	[ "$i" = "%{_target_platform}" ] && continue
+
 	cd build-${i}
 	%make_install
 
 	ldsoname=$(make --quiet ldsoname)
 
-	if [ "${i}" = "%{_target_platform}" ]; then
-		# The dynamic linker must be available at boot time...
-		# In the musl case, libc.so actually is the dynamic linker,
-		# so we have to move it to /%{_lib}/ld-musl-* and symlink
-		# its regular name there, not vice versa (as musl's build
-		# system does)
-		ARCH=$(echo $ldsoname |cut -d- -f3 |cut -d. -f1)
-
-		if echo ${i} |grep -q musl; then
-			# System libc...
-			mv %{buildroot}%{_libdir}/libc.so %{buildroot}$ldsoname
-			ln -s $ldsoname %{buildroot}/%{_lib}/libc.so
-			ln -s /%{_lib}/libc.so %{buildroot}%{_libdir}/libc.so
-		else
-			mv %{buildroot}%{_libdir}/musl/lib/libc.so %{buildroot}$ldsoname
-			ln -s $ldsoname %{buildroot}%{_libdir}/musl/lib/libc.so
-			mkdir -p %{buildroot}%{_sysconfdir}
-			echo %{_libdir}/musl/lib >%{buildroot}%{_sysconfdir}/ld-musl-$ARCH.path
-		fi
-
-		# Musl always expects its dynamic loader in /lib -- since, unlike
-		# glibc, the arch name is part of the file name, this doesn't
-		# cause conflicts.
-		[ -e %{buildroot}/lib/$(basename $ldsoname) ] || ln %{buildroot}$ldsoname %{buildroot}/lib
-
-	else
-		[ -e %{buildroot}/lib/$(basename $ldsoname) ] || ln %{buildroot}%{_prefix}/$i/lib/libc.so %{buildroot}/lib/$(basename $ldsoname) || ln %{buildroot}%{_prefix}/$i/musl/lib/libc.so %{buildroot}/lib/$(basename $ldsoname)
-	fi
-
 	cd ..
+
+	[ -e %{buildroot}/lib/$(basename $ldsoname) ] || ln %{buildroot}%{_prefix}/$i/lib/libc.so %{buildroot}/lib/$(basename $ldsoname) || ln %{buildroot}%{_prefix}/$i/musl/lib/libc.so %{buildroot}/lib/$(basename $ldsoname)
 done
+
+cd build-%{_target_platform}
+rm -f %{buildroot}%{_bindir}/*
+%make_install
+
+ldsoname=$(make --quiet ldsoname)
+# The dynamic linker must be available at boot time...
+# In the musl case, libc.so actually is the dynamic linker,
+# so we have to move it to /%{_lib}/ld-musl-* and symlink
+# its regular name there, not vice versa (as musl's build
+# system does)
+ARCH=$(echo $ldsoname |cut -d- -f3 |cut -d. -f1)
+
+if echo %{_target_platform} |grep -q musl; then
+	# System libc...
+	mv %{buildroot}%{_libdir}/libc.so %{buildroot}$ldsoname
+	ln -s $ldsoname %{buildroot}/%{_lib}/libc.so
+	ln -s /%{_lib}/libc.so %{buildroot}%{_libdir}/libc.so
+else
+	mv %{buildroot}%{_libdir}/musl/lib/libc.so %{buildroot}$ldsoname
+	ln -s $ldsoname %{buildroot}%{_libdir}/musl/lib/libc.so
+	mkdir -p %{buildroot}%{_sysconfdir}
+	echo %{_libdir}/musl/lib >%{buildroot}%{_sysconfdir}/ld-musl-$ARCH.path
+fi
+
+# Musl always expects its dynamic loader in /lib -- since, unlike
+# glibc, the arch name is part of the file name, this doesn't
+# cause conflicts.
+[ -e %{buildroot}/lib/$(basename $ldsoname) ] || ln %{buildroot}$ldsoname %{buildroot}/lib
+cd ..
 
 # Hardlink identical files together -- no need to waste separate space
 # on e.g. x86_64-openmandriva-linux-gnu/musl/lib/libc.so and
