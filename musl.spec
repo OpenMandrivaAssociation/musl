@@ -174,6 +174,14 @@ for i in %{long_targets}; do
 		export CROSS_COMPILE="${i}-"
 		if %{__cc} --version 2>&1 |grep -q clang; then
 			export CC="%{__cc} -target ${i}"
+%ifarch %{aarch64}
+			if echo $i |grep -qE 'i.86'; then
+				# FIXME the clang aarch64->i686 crosscompiler
+				# seems to be broken -- it barfs with
+				# ld.lld: error: undefined symbol: __muldc3 [...]
+				export CC="${i}-gcc -U__FLT_EVAL_METHOD__"
+			fi
+%endif
 			if echo $i |grep -q x32; then
 				export CC="$CC -mx32 -Wa,--x32"
 			elif echo $i |grep -q x86_64; then
