@@ -1,7 +1,7 @@
 # FIXME LTO currently results in undefined reference to __dls2 on x86_64
 %global _disable_lto 1
 
-%global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl
+%global targets aarch64-linux armv7hnl-linux i686-linux x86_64-linux x32-linux riscv64-linux aarch64-linuxmusl armv7hnl-linuxmusl i686-linuxmusl x86_64-linuxmusl x32-linuxmusl riscv64-linuxmusl ppc64-linuxmusl ppc64le-linuxmusl loongarch64-linux loongarch64-linuxmusl
 %global long_targets %(
         for i in %{targets}; do
                 CPU=$(echo $i |cut -d- -f1)
@@ -12,10 +12,10 @@
 
 Name: musl
 Version: 1.2.5
-Release: 2
+Release: 3
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source1: import-mimalloc.sh
-%define mimalloc_version 3.0.3
+%define mimalloc_version 3.1.5
 Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v%{mimalloc_version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
