@@ -31,6 +31,7 @@ Provides: libc.so
 %endif
 # for hardlink
 BuildRequires: util-linux
+BuildRequires: make
 # Patches from upstream git
 Patch0: https://www.openwall.com/lists/musl/2025/02/13/1/1#/CVE-2025-26519-1.patch
 Patch1: https://www.openwall.com/lists/musl/2025/02/13/1/2#/CVE-2025-26519-2.patch
