@@ -12,10 +12,10 @@
 
 Name: musl
 Version: 1.2.5
-Release: 4
+Release: 1
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source1: import-mimalloc.sh
-%define mimalloc_version 3.2.6
+%define mimalloc_version 3.2.8
 Source2: https://github.com/microsoft/mimalloc/archive/refs/tags/v%{mimalloc_version}.tar.gz
 Source10: %{name}.rpmlintrc
 Summary: The musl C library
