@@ -12,7 +12,7 @@
 
 Name: musl
 Version: 1.2.5
-Release: 1
+Release: 5
 Source0: http://musl.libc.org/releases/%{name}-%{version}.tar.gz
 Source1: import-mimalloc.sh
 %define mimalloc_version 3.2.8
